@@ -8,6 +8,8 @@ on:
 jobs:
   descargar-datos:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
 
     steps:
       - name: Clonar repositorio
@@ -26,15 +28,14 @@ jobs:
 
       - name: Ejecutar script de descarga
         env:
-          ESP_USERNAME:            ${{ secrets.ESP_USERNAME }}
-          ESP_PASSWORD:            ${{ secrets.ESP_PASSWORD }}
-          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
-          GOOGLE_DRIVE_FOLDER_ID:  ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+          ESP_USERNAME: ${{ secrets.ESP_USERNAME }}
+          ESP_PASSWORD: ${{ secrets.ESP_PASSWORD }}
         run: python download_sensors.py
 
-      - name: Subir capturas de pantalla
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: screenshots
-          path: "*.png"
+      - name: Guardar Excel en el repositorio
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add datos/
+          git commit -m "Sensores $(date +'%Y-%m-%d')" || echo "Sin archivos nuevos"
+          git push
