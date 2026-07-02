@@ -1,5 +1,4 @@
-Acá está el archivo completo:
-yamlname: Descarga diaria sensores ESP
+name: Descarga diaria sensores ESP
 
 on:
   schedule:
