@@ -1,1 +1,35 @@
+name: Descarga diaria sensores ESP
 
+on:
+  schedule:
+    - cron: '0 10 * * *'   # 10:00 UTC = 07:00 Argentina (hora de verano)
+  workflow_dispatch:         # permite dispararlo manualmente desde GitHub
+
+jobs:
+  descargar-datos:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias Python
+        run: pip install -r requirements.txt
+
+      - name: Instalar Chromium para Playwright
+        run: |
+          playwright install chromium
+          playwright install-deps chromium
+
+      - name: Ejecutar script de descarga
+        env:
+          ESP_USERNAME:            ${{ secrets.ESP_USERNAME }}
+          ESP_PASSWORD:            ${{ secrets.ESP_PASSWORD }}
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+          GOOGLE_DRIVE_FOLDER_ID:  ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+        run: python download_sensors.py
