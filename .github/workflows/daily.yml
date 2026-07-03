@@ -26,16 +26,29 @@ jobs:
       - name: Instalar Chromium para Playwright
         run: playwright install --with-deps chromium
 
-      - name: Ejecutar script de descarga
+      - name: Descargar datos de sensores
         env:
           ESP_USERNAME: ${{ secrets.ESP_USERNAME }}
           ESP_PASSWORD: ${{ secrets.ESP_PASSWORD }}
         run: python download_sensors.py
 
-      - name: Guardar Excel en el repositorio
+      - name: Descargar registro de alertas
+        env:
+          ESP_USERNAME: ${{ secrets.ESP_USERNAME }}
+          ESP_PASSWORD: ${{ secrets.ESP_PASSWORD }}
+        run: python download_alertas.py
+
+      - name: Subir capturas si hubo error
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-alertas
+          path: "*.png"
+
+      - name: Guardar archivos en el repositorio
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add datos/
-          git commit -m "Sensores $(date +'%Y-%m-%d')" || echo "Sin archivos nuevos"
+          git add datos/ alertas/
+          git commit -m "Datos y alertas $(date +'%Y-%m-%d')" || echo "Sin archivos nuevos"
           git push
