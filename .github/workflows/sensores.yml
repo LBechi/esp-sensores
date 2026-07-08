@@ -1,0 +1,65 @@
+name: Gráficos y dashboards de sensores
+
+on:
+  workflow_run:
+    workflows: ["Descarga diaria sensores ESP"]   # debe coincidir con el "name:" de daily.yml
+    types:
+      - completed
+  workflow_dispatch: {}   # permite correrlo manualmente desde la pestaña Actions
+
+permissions:
+  contents: write
+
+jobs:
+  graficos:
+    runs-on: ubuntu-22.04
+    # Solo corre si daily.yml terminó con éxito (o si se dispara a mano)
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias Python
+        run: |
+          pip install -r requirements.txt
+          pip install matplotlib plotly
+
+      - name: Generar gráficos diarios (con alertas)
+        run: |
+          FECHA=$(date +%Y-%m-%d)
+          python3 procesar_sensores.py \
+            "datos/sensores_${FECHA}.xlsx" \
+            --alertas "alertas/alertas_${FECHA}.xlsx" \
+            --outdir "docs/diario/${FECHA}"
+
+      - name: Generar dashboard semanal
+        run: |
+          python3 generar_dashboard_periodo.py \
+            --datos-dir datos \
+            --alertas-dir alertas \
+            --dias 7 \
+            --outdir docs \
+            --nombre-salida reporte_semanal.html
+
+      - name: Generar dashboard mensual
+        run: |
+          python3 generar_dashboard_periodo.py \
+            --datos-dir datos \
+            --alertas-dir alertas \
+            --dias 30 \
+            --outdir docs \
+            --nombre-salida reporte_mensual.html
+
+      - name: Guardar resultados en el repositorio
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/
+          git commit -m "Gráficos y dashboards $(date +'%Y-%m-%d')" || echo "Sin cambios para commitear"
+          git push
