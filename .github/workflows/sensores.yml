@@ -30,11 +30,17 @@ jobs:
 
       - name: Generar gráficos diarios (con alertas)
         run: |
-          FECHA=$(date +%Y-%m-%d)
-          python3 procesar_sensores.py \
-            "datos/sensores_${FECHA}.xlsx" \
-            --alertas "alertas/alertas_${FECHA}.xlsx" \
-            --outdir "docs/diario/${FECHA}"
+          ULTIMO=$(ls -1 datos/sensores_*.xlsx | sort | tail -n 1)
+          FECHA=$(basename "$ULTIMO" .xlsx | sed 's/sensores_//')
+          echo "Usando el archivo más reciente disponible: $ULTIMO (fecha $FECHA)"
+
+          ARCHIVO_ALERTAS="alertas/alertas_${FECHA}.xlsx"
+          if [ -f "$ARCHIVO_ALERTAS" ]; then
+            python3 procesar_sensores.py "$ULTIMO" --alertas "$ARCHIVO_ALERTAS" --outdir "docs/diario/${FECHA}"
+          else
+            echo "No hay archivo de alertas para $FECHA, se grafica sin overlay"
+            python3 procesar_sensores.py "$ULTIMO" --outdir "docs/diario/${FECHA}"
+          fi
 
       - name: Generar dashboard semanal
         run: |
