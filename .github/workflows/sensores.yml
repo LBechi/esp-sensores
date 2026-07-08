@@ -60,6 +60,9 @@ jobs:
             --outdir docs \
             --nombre-salida reporte_mensual.html
 
+      - name: Generar página de inicio (index.html)
+        run: python3 generar_index.py --docs-dir docs
+
       - name: Guardar resultados en el repositorio
         run: |
           git config user.name "github-actions[bot]"
