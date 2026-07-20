@@ -1,0 +1,13 @@
+Etiqueta,lecturas,minimo,maximo,promedio,alertas
+Ambiente Veterinaria - temp,2741,19.44,22.19,21.27,2
+EL-233 Freezer - temp,2766,-21.87,-18.12,-19.23,0
+EL-356 Heladera - temp,2737,2.69,4.25,3.21,0
+EL-370 Heladera - temp,2770,2.37,5.44,3.76,0
+EL-371 Estufa - temp,2739,20.19,22.25,21.55,0
+Freezer EL-308 - temp,2754,-20.25,-18.56,-19.77,0
+heladera BM muestras - Freezer,2751,-23.06,-8.31,-19.87,0
+heladera BM muestras - ambiente,2751,15.19,22.37,18.87,0
+heladera BM muestras - heladera,2751,1.12,4.25,1.9,0
+heladera BM reactivos - Freezer,2612,-25.56,-9.69,-22.7,0
+heladera BM reactivos - ambiente,2612,15.13,21.81,19.14,0
+heladera BM reactivos - heladera,2612,0.56,2.94,1.83,0
