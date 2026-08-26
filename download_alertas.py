@@ -7,7 +7,8 @@ from playwright.async_api import async_playwright
 USERNAME = os.environ["ESP_USERNAME"]
 PASSWORD = os.environ["ESP_PASSWORD"]
 
-LOGIN_URL = "https://espdesign.com.ar/#!/login"
+LOGIN_URL  = "https://espdesign.com.ar/#!/login"
+ALARMS_URL = "https://espdesign.com.ar/#!/alarms"
 
 async def download_alertas() -> str:
     yesterday = datetime.now() - timedelta(days=1)
@@ -39,13 +40,16 @@ async def download_alertas() -> str:
         await page.wait_for_timeout(5000)
         print(f"URL tras login: {page.url}")
 
-        # 2. Registro de alertas
+        # 2. Navegar directo a alertas
         print("Abriendo Registro de alertas...")
-        await page.click('a:has-text("Registro de alertas"), li:has-text("Registro de alertas")')
+        await page.goto(ALARMS_URL, wait_until="networkidle", timeout=60000)
         await page.wait_for_timeout(5000)
+        print(f"URL actual: {page.url}")
+
+        # 3. Esperar que cargue
         await page.wait_for_selector('button:has-text("Aplicar"), button:has-text("Exportar")', timeout=30000)
 
-        # 3. Setear fechas
+        # 4. Setear fechas
         print(f"Seteando fecha: {iso_date}")
         await page.evaluate(f"""
             const inputs = document.querySelectorAll('input[type="date"]');
@@ -60,12 +64,12 @@ async def download_alertas() -> str:
         """)
         await page.wait_for_timeout(1000)
 
-        # 4. Aplicar
+        # 5. Aplicar
         print("Aplicando filtro...")
         await page.click('button:has-text("Aplicar")')
         await page.wait_for_timeout(5000)
 
-        # 5. Exportar
+        # 6. Exportar
         cookies = await ctx.cookies()
         cookie_str = "; ".join([f"{c['name']}={c['value']}" for c in cookies])
 
@@ -112,4 +116,4 @@ async def main():
     print(f"🎉 ¡Listo! Archivo guardado: {filename}")
 
 if __name__ == "__main__":
-    asyncio.run(main())        
+    asyncio.run(main())
