@@ -46,22 +46,4 @@ jobs:
           path: "*.png"
 
       - name: Instalar rclone
-        run: curl https://rclone.org/install.sh | sudo bash
-
-      - name: Configurar rclone
-        run: |
-          mkdir -p ~/.config/rclone
-          echo "${{ secrets.RCLONE_CONFIG }}" > ~/.config/rclone/rclone.conf
-
-      - name: Copiar archivos a Google Drive
-        run: |
-          rclone copy datos/ gdrive:Sensores\ ESP/datos/ --transfers=4
-          rclone copy alertas/ gdrive:Sensores\ ESP/alertas/ --transfers=4
-
-      - name: Guardar archivos en el repositorio
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add datos/ alertas/
-          git commit -m "Datos y alertas $(date +'%Y-%m-%d')" || echo "Sin archivos nuevos"
-          git push
+        run: curl https://rclone.org/install.sh | sudo
