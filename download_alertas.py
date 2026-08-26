@@ -1,5 +1,6 @@
 import asyncio
 import os
+import requests
 from datetime import datetime, timedelta
 from playwright.async_api import async_playwright
 
@@ -13,10 +14,20 @@ async def download_alertas() -> str:
     iso_date  = yesterday.strftime("%Y-%m-%d")
     filename  = f"alertas/alertas_{iso_date}.xlsx"
 
+    export_requests = []
+
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
         ctx     = await browser.new_context(accept_downloads=True)
         page    = await ctx.new_page()
+
+        async def capture_request(request):
+            url = request.url
+            if any(x in url.lower() for x in ["export", "download", "xlsx", "excel", "csv"]):
+                print(f"  → Request capturada: {url}")
+                export_requests.append({"url": url, "headers": request.headers})
+
+        page.on("request", capture_request)
 
         # 1. Login
         print("Navegando al login...")
@@ -28,18 +39,13 @@ async def download_alertas() -> str:
         await page.wait_for_timeout(5000)
         print(f"URL tras login: {page.url}")
 
-        # 2. Ir a Registro de alertas
+        # 2. Registro de alertas
         print("Abriendo Registro de alertas...")
         await page.click('a:has-text("Registro de alertas"), li:has-text("Registro de alertas")')
         await page.wait_for_timeout(5000)
-        await page.screenshot(path="alerta_01_pagina.png")
-        print(f"URL actual: {page.url}")
-
-        # 3. Esperar que cargue la página
         await page.wait_for_selector('button:has-text("Aplicar"), button:has-text("Exportar")', timeout=30000)
-        await page.screenshot(path="alerta_02_lista.png")
 
-        # 4. Setear fechas con JavaScript
+        # 3. Setear fechas
         print(f"Seteando fecha: {iso_date}")
         await page.evaluate(f"""
             const inputs = document.querySelectorAll('input[type="date"]');
@@ -53,23 +59,52 @@ async def download_alertas() -> str:
             }}
         """)
         await page.wait_for_timeout(1000)
-        await page.screenshot(path="alerta_03_fechas.png")
 
-        # 5. Aplicar filtro
+        # 4. Aplicar
         print("Aplicando filtro...")
         await page.click('button:has-text("Aplicar")')
         await page.wait_for_timeout(5000)
-        await page.screenshot(path="alerta_04_post_aplicar.png")
 
-        # 6. Exportar
+        # 5. Exportar
+        cookies = await ctx.cookies()
+        cookie_str = "; ".join([f"{c['name']}={c['value']}" for c in cookies])
+
         print("Exportando alertas...")
         os.makedirs("alertas", exist_ok=True)
-        async with page.expect_download(timeout=30000) as dl_info:
-            await page.click('button:has-text("Exportar")')
-        download = await dl_info.value
-        await download.save_as(filename)
+
+        try:
+            async with page.expect_download(timeout=10000) as dl_info:
+                await page.click('button:has-text("Exportar")')
+            download = await dl_info.value
+            await download.save_as(filename)
+            print(f"✅ Descarga directa exitosa: {filename}")
+
+        except Exception:
+            print("Descarga directa no funcionó, esperando request interceptada...")
+            await page.wait_for_timeout(5000)
+            await page.screenshot(path="alerta_post_exportar.png")
+
+            if export_requests:
+                req = export_requests[-1]
+                print(f"Descargando via requests: {req['url']}")
+                headers = {"Cookie": cookie_str, "User-Agent": "Mozilla/5.0"}
+                r = requests.get(req["url"], headers=headers, timeout=30)
+                r.raise_for_status()
+                with open(filename, "wb") as f:
+                    f.write(r.content)
+                print(f"✅ Descargado via requests: {filename}")
+            else:
+                print("No se capturó request de exportación.")
+                all_reqs = []
+                page.on("request", lambda r: all_reqs.append(r.url))
+                await page.click('button:has-text("Exportar")')
+                await page.wait_for_timeout(5000)
+                print("Requests generadas:")
+                for r in all_reqs:
+                    print(f"  {r}")
+                raise RuntimeError("No se pudo exportar alertas")
+
         await browser.close()
-        print(f"✅ Descargado: {filename}")
         return filename
 
 async def main():
