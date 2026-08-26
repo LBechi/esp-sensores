@@ -13,10 +13,10 @@ jobs:
 
     steps:
       - name: Clonar repositorio
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Instalar Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -40,10 +40,23 @@ jobs:
 
       - name: Subir capturas si hubo error
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
-          name: screenshots-alertas
+          name: screenshots
           path: "*.png"
+
+      - name: Instalar rclone
+        run: curl https://rclone.org/install.sh | sudo bash
+
+      - name: Configurar rclone
+        run: |
+          mkdir -p ~/.config/rclone
+          echo "${{ secrets.RCLONE_CONFIG }}" > ~/.config/rclone/rclone.conf
+
+      - name: Copiar archivos a Google Drive
+        run: |
+          rclone copy datos/ gdrive:Sensores\ ESP/datos/ --transfers=4
+          rclone copy alertas/ gdrive:Sensores\ ESP/alertas/ --transfers=4
 
       - name: Guardar archivos en el repositorio
         run: |
