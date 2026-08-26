@@ -45,5 +45,10 @@ jobs:
           name: screenshots
           path: "*.png"
 
-      - name: Instalar rclone
-        run: curl https://rclone.org/install.sh | sudo
+      - name: Guardar archivos en el repositorio
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add datos/ alertas/
+          git commit -m "Datos y alertas $(date +'%Y-%m-%d')" || echo "Sin archivos nuevos"
+          git push
