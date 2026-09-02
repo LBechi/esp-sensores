@@ -11,9 +11,13 @@ LOGIN_URL  = "https://espdesign.com.ar/#!/login"
 ALARMS_URL = "https://espdesign.com.ar/#!/alarms"
 
 async def download_alertas() -> str:
-    yesterday = datetime.now() - timedelta(days=1)
-    iso_date  = yesterday.strftime("%Y-%m-%d")
-    filename  = f"alertas/alertas_{iso_date}.xlsx"
+    fecha_manual = os.environ.get("FECHA_DESCARGA", "").strip()
+    if fecha_manual:
+        target_date = datetime.strptime(fecha_manual, "%Y-%m-%d")
+    else:
+        target_date = datetime.now() - timedelta(days=1)
+    iso_date = target_date.strftime("%Y-%m-%d")
+    filename = f"alertas/alertas_{iso_date}.xlsx"
 
     export_requests = []
 
@@ -90,9 +94,21 @@ async def download_alertas() -> str:
 
             if export_requests:
                 req = export_requests[-1]
-                print(f"Descargando via requests: {req['url']}")
                 headers = {"Cookie": cookie_str, "User-Agent": "Mozilla/5.0"}
-                r = requests.get(req["url"], headers=headers, timeout=30)
+
+                # El servidor a veces tarda en generar el archivo de exportación,
+                # así que reintentamos con espera antes de darlo por fallido.
+                max_intentos = 6
+                espera_seg = 5
+                r = None
+                for intento in range(1, max_intentos + 1):
+                    print(f"Descargando via requests (intento {intento}/{max_intentos}): {req['url']}")
+                    r = requests.get(req["url"], headers=headers, timeout=30)
+                    if r.status_code == 200:
+                        break
+                    print(f"  → Respuesta {r.status_code}, esperando {espera_seg}s antes de reintentar...")
+                    await page.wait_for_timeout(espera_seg * 1000)
+
                 r.raise_for_status()
                 with open(filename, "wb") as f:
                     f.write(r.content)
