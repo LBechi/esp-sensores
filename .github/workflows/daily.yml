@@ -42,6 +42,7 @@ jobs:
         env:
           ESP_USERNAME: ${{ secrets.ESP_USERNAME }}
           ESP_PASSWORD: ${{ secrets.ESP_PASSWORD }}
+          FECHA_DESCARGA: ${{ github.event.inputs.fecha }}
         run: python download_alertas.py
 
       - name: Subir capturas si hubo error
