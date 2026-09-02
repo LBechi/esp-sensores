@@ -10,9 +10,13 @@ PASSWORD = os.environ["ESP_PASSWORD"]
 LOGIN_URL = "https://espdesign.com.ar/#!/login"
 
 async def download_excel() -> str:
-    yesterday = datetime.now() - timedelta(days=1)
-    iso_date  = yesterday.strftime("%Y-%m-%d")
-    filename  = f"datos/sensores_{iso_date}.xlsx"
+    fecha_manual = os.environ.get("FECHA_DESCARGA", "").strip()
+    if fecha_manual:
+        target_date = datetime.strptime(fecha_manual, "%Y-%m-%d")
+    else:
+        target_date = datetime.now() - timedelta(days=1)
+    iso_date = target_date.strftime("%Y-%m-%d")
+    filename = f"datos/sensores_{iso_date}.xlsx"
 
     export_requests = []
 
