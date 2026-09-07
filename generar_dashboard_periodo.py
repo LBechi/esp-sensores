@@ -87,7 +87,7 @@ def cargar_alertas_periodo(archivos) -> pd.DataFrame:
         if not columnas_esperadas.issubset(df.columns):
             print(f"  ! {f.name}: columnas inesperadas, se omite")
             continue
-        df["Fecha"] = pd.to_datetime(df["Fecha"])
+        df["Fecha"] = pd.to_datetime(df["Fecha"], format="mixed", dayfirst=True)
         dfs.append(df)
     if not dfs:
         return pd.DataFrame(columns=["Fecha", "Dispositivo", "Sensor", "Valor", "Etiqueta"])
