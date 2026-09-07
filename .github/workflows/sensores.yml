@@ -26,7 +26,7 @@ jobs:
           python-version: '3.11'
 
       - name: Instalar dependencias Python
-        run: pip install -r requirements.txt
+        run: pip install -r requirements-graficos.txt
 
       - name: Generar gráficos diarios (con alertas)
         run: |
