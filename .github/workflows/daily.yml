@@ -32,18 +32,28 @@ jobs:
         run: playwright install --with-deps chromium
 
       - name: Descargar datos de sensores
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 6
+          retry_wait_seconds: 30
+          command: python download_sensors.py
         env:
           ESP_USERNAME: ${{ secrets.ESP_USERNAME }}
           ESP_PASSWORD: ${{ secrets.ESP_PASSWORD }}
           FECHA_DESCARGA: ${{ github.event.inputs.fecha }}
-        run: python download_sensors.py
 
       - name: Descargar registro de alertas
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 6
+          retry_wait_seconds: 30
+          command: python download_alertas.py
         env:
           ESP_USERNAME: ${{ secrets.ESP_USERNAME }}
           ESP_PASSWORD: ${{ secrets.ESP_PASSWORD }}
           FECHA_DESCARGA: ${{ github.event.inputs.fecha }}
-        run: python download_alertas.py
 
       - name: Subir capturas si hubo error
         if: failure()
@@ -59,3 +69,18 @@ jobs:
           git add datos/ alertas/
           git commit -m "Datos y alertas $(date +'%Y-%m-%d')" || echo "Sin archivos nuevos"
           git push
+
+      - name: Notificar fallo por email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "Falló la descarga diaria de sensores ESP"
+          to: ${{ secrets.MAIL_TO }}
+          from: Alertas ESP Sensores
+          body: |
+            La descarga diaria de datos/alertas de espdesign.com.ar falló después de agotar los reintentos.
+            Ver el log completo acá: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
