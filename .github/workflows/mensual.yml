@@ -1,0 +1,77 @@
+name: Consolidado mensual sensores ESP
+
+on:
+  schedule:
+    - cron: '0 11 1 * *'   # 1ro de cada mes, después de la descarga diaria
+  workflow_dispatch:
+    inputs:
+      anio:
+        description: 'Año a consolidar (vacío = mes anterior)'
+        required: false
+        default: ''
+      mes:
+        description: 'Mes a consolidar, 1-12 (vacío = mes anterior)'
+        required: false
+        default: ''
+      formato:
+        description: 'Formato de salida'
+        required: false
+        default: 'xlsx'
+        type: choice
+        options:
+          - xlsx
+          - csv
+
+permissions:
+  contents: write
+
+jobs:
+  consolidar:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v5
+
+      - name: Instalar Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: pip install pandas openpyxl
+
+      - name: Consolidar archivos del mes
+        env:
+          ANIO: ${{ github.event.inputs.anio }}
+          MES: ${{ github.event.inputs.mes }}
+          FORMATO: ${{ github.event.inputs.formato }}
+        run: |
+          ARGS=""
+          if [ -n "$ANIO" ]; then ARGS="$ARGS --anio $ANIO"; fi
+          if [ -n "$MES" ]; then ARGS="$ARGS --mes $MES"; fi
+          FORMATO="${FORMATO:-xlsx}"
+          python consolidar_mensual.py $ARGS --formato "$FORMATO"
+
+      - name: Guardar consolidado en el repositorio
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add datos_mensuales/ alertas_mensuales/
+          git commit -m "Consolidado mensual $(date +'%Y-%m')" || echo "Sin cambios para commitear"
+          git push
+
+      - name: Notificar resultado por email
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "${{ job.status == 'success' && 'OK' || 'FALLÓ' }} - Consolidado mensual sensores ESP"
+          to: ${{ secrets.MAIL_TO }}
+          from: Alertas ESP Sensores
+          body: |
+            El consolidado mensual terminó con estado: ${{ job.status }}
+            Ver el log completo acá: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}

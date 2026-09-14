@@ -1,0 +1,40 @@
+name: Borrar registros de un mes
+
+on:
+  workflow_dispatch:
+    inputs:
+      anio:
+        description: 'Año a borrar (YYYY)'
+        required: true
+      mes:
+        description: 'Mes a borrar (1-12)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  borrar:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v5
+
+      - name: Instalar Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Borrar archivos del mes indicado
+        env:
+          ANIO: ${{ github.event.inputs.anio }}
+          MES: ${{ github.event.inputs.mes }}
+        run: python borrar_mes.py --anio "$ANIO" --mes "$MES"
+
+      - name: Confirmar borrado en el repositorio
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A datos/ alertas/ datos_mensuales/ alertas_mensuales/
+          git commit -m "Borrado de registros ${{ github.event.inputs.anio }}-${{ github.event.inputs.mes }}" || echo "Nada para borrar"
+          git push
