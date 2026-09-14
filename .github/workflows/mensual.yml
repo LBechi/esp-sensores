@@ -61,25 +61,6 @@ jobs:
           git commit -m "Consolidado mensual $(date +'%Y-%m')" || echo "Sin cambios para commitear"
           git push
 
-      - name: Instalar dependencias de Google Drive
-        if: success()
-        run: pip install google-api-python-client google-auth
-
-      - name: Subir consolidado a Google Drive
-        if: success()
-        env:
-          GDRIVE_SA_KEY_JSON: ${{ secrets.GDRIVE_SA_KEY_JSON }}
-          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
-          ANIO: ${{ github.event.inputs.anio }}
-          MES: ${{ github.event.inputs.mes }}
-          FORMATO: ${{ github.event.inputs.formato }}
-        run: |
-          ARGS=""
-          if [ -n "$ANIO" ]; then ARGS="$ARGS --anio $ANIO"; fi
-          if [ -n "$MES" ]; then ARGS="$ARGS --mes $MES"; fi
-          FORMATO="${FORMATO:-xlsx}"
-          python subir_drive.py $ARGS --formato "$FORMATO"
-
       - name: Notificar resultado por email
         if: always()
         uses: dawidd6/action-send-mail@v3
