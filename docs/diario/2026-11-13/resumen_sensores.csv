@@ -1,0 +1,17 @@
+Etiqueta,lecturas,minimo,maximo,promedio,alertas
+Ambiente Veterinaria - temp,1777,21.19,25.12,24.15,26
+EL-233 - Freezer derivaciones - temp,2809,-29.87,-23.81,-27.88,0
+EL-356 Heladera Citogenerica - temp,2775,0.0,40.5,2.73,0
+EL-371 Estufa - temp,2328,21.12,25.37,23.56,15
+Freezer EL-308 - temp,2819,-21.31,-17.31,-20.34,0
+Heladera Reactivos Cobas Pro - temp,2822,-0.62,15.81,4.34,2
+Heladera/Freezer Pasillo - EL-008 Freezer,1703,-20.3,28.0,-19.11,0
+Heladera/Freezer Pasillo - EL-308 Freezer,1708,-12.37,85.0,-11.15,0
+Heladera/Freezer Pasillo - EL-370 Heladera,1708,-0.06,27.56,4.78,0
+Heladera/Freezer Pasillo - hum1,1703,53.8,85.3,72.17,0
+heladera BM muestras - Freezer,2785,-21.81,-6.31,-19.12,3
+heladera BM muestras - ambiente,2785,15.63,20.81,17.97,1
+heladera BM muestras - heladera,2785,1.37,4.75,2.0,1
+heladera BM reactivos - Freezer,2659,-25.44,-6.56,-22.66,0
+heladera BM reactivos - ambiente,2659,15.81,21.06,18.11,0
+heladera BM reactivos - heladera,2659,0.81,3.31,1.7,0
